@@ -1,14 +1,6 @@
-# Turborepo Docker starter
-
-This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
+# Turborepo Docker starter for nestjs and react
 
 ## Using this example
-
-Run the following command:
-
-```sh
-npx create-turbo@latest -e with-docker
-```
 
 ## What's inside?
 
@@ -16,9 +8,10 @@ This Turborepo includes the following:
 
 ### Apps and Packages
 
-- `web`: a [Next.js](https://nextjs.org/) app
-- `api`: an [Express](https://expressjs.com/) server
+- `web`: a [react](https://react.dev/) app
+- `api`: an [nestjs](https://nestjs.com/) server
 - `@repo/ui`: a React component library
+- `@repo/api`: Shared `NestJS` resources
 - `@repo/logger`: Isomorphic logger (a small wrapper around console.log)
 - `@repo/eslint-config`: ESLint presets
 - `@repo/typescript-config`: tsconfig.json's used throughout the monorepo
@@ -32,7 +25,7 @@ This repo is configured to be built with Docker, and Docker compose. To build al
 
 ```
 # Install dependencies
-yarn install
+pnpm install
 
 # Create a network, which allows containers to communicate
 # with each other, by using their container name as a hostname

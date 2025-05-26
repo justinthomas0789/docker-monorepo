@@ -1,7 +1,10 @@
 {
-  "name": "with-docker",
+  "name": "docker",
   "version": "0.0.0",
-  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "clean": "turbo run clean",
@@ -12,12 +15,19 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "prettier": "^3.2.5",
-    "turbo": "^2.5.3"
+    "turbo": "^2.5.0"
   },
+  "packageManager": "pnpm@10.10.0",
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=7.0.0"
   },
-  "packageManager": "pnpm@10.10.0"
+  "author": {
+    "name": "Justin Thomas",
+    "email": "justinthomas0789@gmail.com",
+    "url": "https://github.com/justinthomas0789"
+  },
 }
