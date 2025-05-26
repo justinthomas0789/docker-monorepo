@@ -16,5 +16,10 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "author": {
+    "name": "Justin Thomas",
+    "email": "justinthomas0789@gmail.com",
+    "url": "https://github.com/justinthomas0789"
   }
 }
