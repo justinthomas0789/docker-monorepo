@@ -1,52 +1,35 @@
 FROM node:18-alpine AS base
 
-# This Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
-# Make sure you update both files!
-
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk update
-RUN apk add --no-cache libc6-compat
-# Set working directory
+RUN apk update && apk add --no-cache libc6-compat
 WORKDIR /app
-RUN yarn global add turbo
+
 COPY . .
-RUN turbo prune web --docker
 
-# Add lockfile and package.json's of isolated subworkspace
-FROM base AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# First install the dependencies (as they change less often)
-COPY --from=builder /app/out/json/ .
-RUN yarn install
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Build the project
-COPY --from=builder /app/out/full/ .
+# Copy env file
+COPY apps/web/.env apps/web/.env
 
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
+# Build the React app with Vite
+RUN pnpm --filter web build
 
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
+FROM nginx:alpine AS runner
+WORKDIR /usr/share/nginx/html
 
-RUN yarn turbo build
+# Remove default nginx static files
+RUN rm -rf ./*
 
-FROM base AS runner
-WORKDIR /app
+# Copy build output
+COPY --from=builder /app/apps/web/dist ./
 
-# Don't run production as root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-USER nextjs
+# Copy custom nginx config (optional)
+# COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+EXPOSE 80
 
-CMD node apps/web/server.js
+CMD ["nginx", "-g", "daemon off;"]

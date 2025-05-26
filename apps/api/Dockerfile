@@ -1,47 +1,63 @@
+# Base image
 FROM node:18-alpine AS base
+WORKDIR /app
+ENV NODE_ENV=production
 
-# The web Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
-# Make sure you update this Dockerfile, the Dockerfile in the web workspace and copy that over to Dockerfile in the docs.
+RUN apk add --no-cache libc6-compat
 
+# ---------------------------
+# Builder stage
+# ---------------------------
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk update
-RUN apk add --no-cache libc6-compat
-# Set working directory
-WORKDIR /app
-RUN yarn global add turbo
+
+# Install Turbo and pnpm globally
+RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN pnpm add -g turbo
+
+# Copy the full monorepo
 COPY . .
-RUN turbo prune api --docker
 
-# Add lockfile and package.json's of isolated subworkspace
+# Prune the workspace for only api
+RUN turbo prune --scope=api --docker
+
+# ---------------------------
+# Dependencies installer
+# ---------------------------
 FROM base AS installer
-RUN apk update
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# First install dependencies (as they change less often)
-COPY --from=builder /app/out/json/ .
-RUN yarn install
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Build the project and its dependencies
-COPY --from=builder /app/out/full/ .
+# Copy pruned dependency files
+COPY --from=builder /app/out/json/ ./
 
-# Uncomment and use build args to enable remote caching
-# ARG TURBO_TEAM
-# ENV TURBO_TEAM=$TURBO_TEAM
+# Install only necessary dependencies
+RUN pnpm install --frozen-lockfile
 
-# ARG TURBO_TOKEN
-# ENV TURBO_TOKEN=$TURBO_TOKEN
+# Copy source files
+COPY --from=builder /app/out/full/ ./
 
-RUN yarn turbo build
+# Copy .env file if present
+COPY apps/api/.env ./apps/api/.env
 
+# Build the api app
+RUN pnpm turbo run build --filter=api...
+
+# ---------------------------
+# Final runner
+# ---------------------------
 FROM base AS runner
 WORKDIR /app
 
-# Don't run production as root
-RUN addgroup --system --gid 1001 expressjs
-RUN adduser --system --uid 1001 expressjs
-USER expressjs
-COPY --from=installer /app .
+RUN addgroup --system app && adduser --system --ingroup app app
+USER app
 
-CMD node apps/api/dist/index.js
+# Copy built output and node_modules
+COPY --from=installer /app ./
+
+# Copy .env file for runtime
+COPY apps/api/.env ./apps/api/.env
+
+EXPOSE 3000
+CMD ["node", "dist/apps/api/main"]
+
