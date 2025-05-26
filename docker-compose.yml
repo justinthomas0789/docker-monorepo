@@ -2,12 +2,13 @@ services:
   web:
     container_name: web
     build:
-      context: .
-      dockerfile: ./apps/web/Dockerfile
+      context: ./apps/web
+      dockerfile: Dockerfile
     ports:
       - "5173:5173"
+    restart: always
     volumes:
-      - ./packages/web:/app
+      - ./apps/web:/app
       - /app/node_modules
     environment:
       - VITE_API_URL=http://api:3000
@@ -20,12 +21,13 @@ services:
   api:
     container_name: api
     build:
-      context: .
-      dockerfile: ./apps/api/Dockerfile
+      context: ./apps/api
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    restart: always
     volumes:
-      - ./packages/api:/app
+      - ./apps/api:/app
       - /app/node_modules
     environment:
       - PORT=3000
