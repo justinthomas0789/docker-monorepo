@@ -1,37 +1,33 @@
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import ProTip from './ProTip';
+import { useState, useEffect } from 'react';
+import { Button, Typography, Container } from '@mui/material';
 
-function Copyright() {
-  return (
-    <Typography
-      variant="body2"
-      align="center"
-      sx={{
-        color: 'text.secondary',
-      }}
-    >
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}.
-    </Typography>
-  );
-}
+function App() {
+  const [count, setCount] = useState(0);
+  const [apiMessage, setApiMessage] = useState('');
 
-export default function App() {
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}`)
+      .then((res) => res.text())
+      .then((data) => setApiMessage(data))
+      .catch((err) => console.error('Error:', err));
+  }, []);
+
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ mb: 2 }}>
-          Material UI Vite example in TypeScript
-        </Typography>
-        <ProTip />
-        <Copyright />
-      </Box>
+    <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '50px' }}>
+      <Typography variant="h4" gutterBottom>
+        {import.meta.env.VITE_APP_NAME || 'React App'}
+      </Typography>
+      <Typography variant="body1">Count: {count}</Typography>
+      <Typography variant="body2">API: {apiMessage || 'Loading...'}</Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setCount(count + 1)}
+      >
+        Increment
+      </Button>
     </Container>
   );
 }
+
+export default App;
