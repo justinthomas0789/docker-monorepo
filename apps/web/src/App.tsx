@@ -1,32 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button, Typography, Container } from '@mui/material';
+import { ApolloClient, InMemoryCache, ApolloProvider, gql, useQuery } from '@apollo/client';
 
-function App() {
-  const [count, setCount] = useState(0);
-  const [apiMessage, setApiMessage] = useState('');
+const client = new ApolloClient({
+  uri: import.meta.env.VITE_API_URL,
+  cache: new InMemoryCache(),
+});
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}`)
-      .then((res) => res.text())
-      .then((data) => setApiMessage(data))
-      .catch((err) => console.error('Error:', err));
-  }, []);
+const GET_FORM = gql`
+  query GetForm($id: String!) {
+    getForm(id: $id)
+  }
+`;
+
+function AppContent() {
+  const [id] = useState('1');
+  const { loading, error, data } = useQuery(GET_FORM, { variables: { id } });
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '50px' }}>
       <Typography variant="h4" gutterBottom>
         {import.meta.env.VITE_APP_NAME || 'React App'}
       </Typography>
-      <Typography variant="body1">Count: {count}</Typography>
-      <Typography variant="body2">API: {apiMessage || 'Loading...'}</Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => setCount(count + 1)}
-      >
-        Increment
+      <Typography variant="body1">
+        {loading ? 'Loading...' : error ? 'Error!' : data?.getForm}
+      </Typography>
+      <Button variant="contained" color="primary">
+        Test GraphQL
       </Button>
     </Container>
+  );
+}
+
+function App() {
+  return (
+    <ApolloProvider client={client}>
+      <AppContent />
+    </ApolloProvider>
   );
 }
 

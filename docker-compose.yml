@@ -11,26 +11,61 @@ services:
       - ./apps/web:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://api:3000
+      - VITE_API_URL=http://localhost:3000/graphql
       - VITE_APP_NAME=MyReactApp
     depends_on:
-      - api
+      - gateway
     networks:
       - app-network
 
-  api:
-    container_name: api
+  gateway:
+    container_name: gateway
     build:
-      context: ./apps/api
+      context: ./apps/gateway
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     restart: always
     volumes:
-      - ./apps/api:/app
+      - ./apps/gateway:/app
       - /app/node_modules
     environment:
       - PORT=3000
+    depends_on:
+      - users
+      - forms
+    networks:
+      - app-network
+
+  users:
+    container_name: users
+    build:
+      context: ./apps/users
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    restart: always
+    volumes:
+      - ./apps/users:/app
+      - /app/node_modules
+    environment:
+      - PORT=3001
+    networks:
+      - app-network
+
+  forms:
+    container_name: forms
+    build:
+      context: ./apps/forms
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    restart: always
+    volumes:
+      - ./apps/forms:/app
+      - /app/node_modules
+    environment:
+      - PORT=3002
     networks:
       - app-network
 
